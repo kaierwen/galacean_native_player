@@ -16,7 +16,7 @@ class GalaceanNativePlayerPlugin: FlutterPlugin, MethodCallHandler {
   private lateinit var flutterPluginBinding: FlutterPlugin.FlutterPluginBinding
 
   companion object {
-    const val SDK_VERSION = "1.0.0"
+    const val SDK_VERSION = "0.0.1.202311221223"  // Galacean Effects SDK 版本
   }
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {

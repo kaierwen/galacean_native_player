@@ -48,6 +48,11 @@ android {
     }
 
     dependencies {
+        // Galacean Effects SDK（根据官方文档）
+        implementation 'io.github.galacean:effects:0.0.1.202311221223'
+        implementation 'com.squareup.okhttp3:okhttp:3.10.0'
+        implementation 'com.alibaba:fastjson:1.2.76'
+        
         testImplementation("org.jetbrains.kotlin:kotlin-test")
         testImplementation("org.mockito:mockito-core:5.0.0")
     }

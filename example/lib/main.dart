@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:galacean_native_player/galacean_native_player.dart';
 
@@ -44,7 +45,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _initPlatformState() async {
     String platformVersion;
     String sdkVersion;
-    
+
     try {
       platformVersion = await _galaceanPlugin.getPlatformVersion() ?? 'Unknown';
     } on PlatformException {
@@ -182,7 +183,7 @@ class _PlayerPageState extends State<PlayerPage> {
   void initState() {
     super.initState();
     _controller = GalaceanPlayerController();
-    
+
     // 监听状态变化
     _controller.stateStream.listen((state) {
       if (mounted) {
@@ -191,7 +192,7 @@ class _PlayerPageState extends State<PlayerPage> {
         });
       }
     });
-    
+
     // 监听错误
     _controller.errorStream.listen((error) {
       if (mounted) {
@@ -230,10 +231,10 @@ class _PlayerPageState extends State<PlayerPage> {
     try {
       // TODO: 替换为实际的特效资源 URL
       await _controller.loadScene(
-        'https://example.com/effect.json',
+        'https://mdn.alipayobjects.com/mars/afts/file/A*WL2TTZ0DBGoAAAAAAAAAAAAAARInAQ',
         autoPlay: true,
       );
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('场景加载成功')),
@@ -308,7 +309,7 @@ class _PlayerPageState extends State<PlayerPage> {
               ),
             ),
           ),
-          
+
           // 状态栏
           Container(
             padding: const EdgeInsets.all(8),
@@ -321,7 +322,7 @@ class _PlayerPageState extends State<PlayerPage> {
               ],
             ),
           ),
-          
+
           // 控制按钮
           Container(
             padding: const EdgeInsets.all(16),
