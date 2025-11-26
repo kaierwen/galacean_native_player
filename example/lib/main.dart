@@ -168,6 +168,62 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+/// 特效资源列表
+class EffectResource {
+  final String name;
+  final String url;
+  final String description;
+
+  const EffectResource({
+    required this.name,
+    required this.url,
+    required this.description,
+  });
+}
+
+const List<EffectResource> effectResources = [
+  EffectResource(
+    name: 'Heart 粒子',
+    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*WL2TTZ0DBGoAAAAAAAAAAAAAARInAQ',
+    description: '爱心粒子特效',
+  ),
+  EffectResource(
+    name: '闪电球',
+    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*D6TbS5ax2TgAAAAAAAAAAAAAARInAQ',
+    description: '电光闪烁特效',
+  ),
+  EffectResource(
+    name: '年兽大爆炸',
+    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*TazWSbYr84wAAAAAAAAAAAAAARInAQ',
+    description: '新年主题爆炸特效',
+  ),
+  EffectResource(
+    name: '双十一鼓掌',
+    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*e7_FTLA_REgAAAAAAAAAAAAAARInAQ',
+    description: '购物节庆祝特效',
+  ),
+  EffectResource(
+    name: '敬业福弹卡',
+    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*D4ixTaUS-HoAAAAAAAAAAAAADlB4AQ',
+    description: '集五福弹卡特效',
+  ),
+  EffectResource(
+    name: '七夕福利倒计时',
+    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*OW2VSKK3bWIAAAAAAAAAAAAADlB4AQ',
+    description: '七夕节倒计时特效',
+  ),
+  EffectResource(
+    name: '天猫 618',
+    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*wIkMSokvwCgAAAAAAAAAAAAAARInAQ',
+    description: '618 购物节特效',
+  ),
+  EffectResource(
+    name: '年度账单',
+    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*VtHiR4iOuxYAAAAAAAAAAAAAARInAQ',
+    description: '年度账单特效（40s）',
+  ),
+];
+
 class PlayerPage extends StatefulWidget {
   const PlayerPage({super.key});
 
@@ -178,6 +234,7 @@ class PlayerPage extends StatefulWidget {
 class _PlayerPageState extends State<PlayerPage> {
   late final GalaceanPlayerController _controller;
   String _statusText = '未初始化';
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -227,17 +284,19 @@ class _PlayerPageState extends State<PlayerPage> {
     }
   }
 
-  Future<void> _loadScene() async {
+  Future<void> _loadScene([int? index]) async {
+    final effectIndex = index ?? _selectedIndex;
+    final effect = effectResources[effectIndex];
+    
     try {
-      // TODO: 替换为实际的特效资源 URL
       await _controller.loadScene(
-        'https://mdn.alipayobjects.com/mars/afts/file/A*WL2TTZ0DBGoAAAAAAAAAAAAAARInAQ',
+        effect.url,
         autoPlay: true,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('场景加载成功')),
+          SnackBar(content: Text('${effect.name} 加载成功')),
         );
       }
     } catch (e) {
@@ -252,14 +311,170 @@ class _PlayerPageState extends State<PlayerPage> {
     }
   }
 
+  void _showEffectSelector() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.3,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+                // 拖动指示器
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // 标题
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.auto_awesome, color: Colors.amber),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '选择特效',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${effectResources.length} 个特效',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(),
+                // 特效列表
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    itemCount: effectResources.length,
+                    itemBuilder: (context, index) {
+                      final effect = effectResources[index];
+                      final isSelected = index == _selectedIndex;
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: isSelected 
+                              ? Theme.of(context).primaryColor 
+                              : Colors.grey[200],
+                          child: Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.grey[600],
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          effect.name,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                        subtitle: Text(
+                          effect.description,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                        trailing: isSelected 
+                            ? const Icon(Icons.check_circle, color: Colors.green)
+                            : const Icon(Icons.play_circle_outline),
+                        selected: isSelected,
+                        onTap: () {
+                          setState(() {
+                            _selectedIndex = index;
+                          });
+                          Navigator.pop(context);
+                          _loadScene(index);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentEffect = effectResources[_selectedIndex];
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Galacean 播放器'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list),
+            tooltip: '选择特效',
+            onPressed: _showEffectSelector,
+          ),
+        ],
       ),
       body: Column(
         children: [
+          // 当前特效信息
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            child: Row(
+              children: [
+                const Icon(Icons.auto_awesome, size: 20, color: Colors.amber),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        currentEffect.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        currentEffect.description,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _showEffectSelector,
+                  icon: const Icon(Icons.swap_horiz, size: 18),
+                  label: const Text('切换'),
+                ),
+              ],
+            ),
+          ),
+          
           // 播放器视图
           Expanded(
             child: Container(
@@ -284,7 +499,7 @@ class _PlayerPageState extends State<PlayerPage> {
                               size: 48,
                             ),
                             const SizedBox(height: 16),
-                            Text(
+                            const Text(
                               '播放器错误',
                               style: TextStyle(
                                 color: Colors.white,
@@ -294,7 +509,7 @@ class _PlayerPageState extends State<PlayerPage> {
                             const SizedBox(height: 8),
                             Text(
                               error,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 14,
                               ),
@@ -319,6 +534,14 @@ class _PlayerPageState extends State<PlayerPage> {
                 const Icon(Icons.info_outline, size: 20),
                 const SizedBox(width: 8),
                 Text('状态: $_statusText'),
+                const Spacer(),
+                Text(
+                  '${_selectedIndex + 1}/${effectResources.length}',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
@@ -328,13 +551,26 @@ class _PlayerPageState extends State<PlayerPage> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
+                // 第一行：主要控制按钮
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildControlButton(
+                      icon: Icons.skip_previous,
+                      label: '上一个',
+                      onPressed: _controller.isInitialized && _selectedIndex > 0
+                          ? () {
+                              setState(() {
+                                _selectedIndex--;
+                              });
+                              _loadScene();
+                            }
+                          : null,
+                    ),
+                    _buildControlButton(
                       icon: Icons.file_download,
                       label: '加载',
-                      onPressed: _controller.isInitialized ? _loadScene : null,
+                      onPressed: _controller.isInitialized ? () => _loadScene() : null,
                     ),
                     _buildControlButton(
                       icon: Icons.play_arrow,
@@ -350,6 +586,25 @@ class _PlayerPageState extends State<PlayerPage> {
                           ? () => _controller.pause()
                           : null,
                     ),
+                    _buildControlButton(
+                      icon: Icons.skip_next,
+                      label: '下一个',
+                      onPressed: _controller.isInitialized && _selectedIndex < effectResources.length - 1
+                          ? () {
+                              setState(() {
+                                _selectedIndex++;
+                              });
+                              _loadScene();
+                            }
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // 第二行：辅助控制按钮
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
                     _buildControlButton(
                       icon: Icons.play_circle,
                       label: '恢复',
@@ -370,6 +625,18 @@ class _PlayerPageState extends State<PlayerPage> {
                       onPressed: _controller.isInitialized
                           ? () => _controller.replay()
                           : null,
+                    ),
+                    _buildControlButton(
+                      icon: Icons.loop,
+                      label: '循环',
+                      onPressed: _controller.isInitialized
+                          ? () => _controller.setLoop(true)
+                          : null,
+                    ),
+                    _buildControlButton(
+                      icon: Icons.list_alt,
+                      label: '列表',
+                      onPressed: _showEffectSelector,
                     ),
                   ],
                 ),
