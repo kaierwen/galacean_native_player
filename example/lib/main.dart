@@ -184,42 +184,50 @@ class EffectResource {
 const List<EffectResource> effectResources = [
   EffectResource(
     name: 'Heart 粒子',
-    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*WL2TTZ0DBGoAAAAAAAAAAAAAARInAQ',
+    url:
+        'https://mdn.alipayobjects.com/mars/afts/file/A*WL2TTZ0DBGoAAAAAAAAAAAAAARInAQ',
     description: '爱心粒子特效',
   ),
   EffectResource(
     name: '闪电球',
-    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*D6TbS5ax2TgAAAAAAAAAAAAAARInAQ',
+    url:
+        'https://mdn.alipayobjects.com/mars/afts/file/A*D6TbS5ax2TgAAAAAAAAAAAAAARInAQ',
     description: '电光闪烁特效',
   ),
   EffectResource(
     name: '年兽大爆炸',
-    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*TazWSbYr84wAAAAAAAAAAAAAARInAQ',
+    url:
+        'https://mdn.alipayobjects.com/mars/afts/file/A*TazWSbYr84wAAAAAAAAAAAAAARInAQ',
     description: '新年主题爆炸特效',
   ),
   EffectResource(
     name: '双十一鼓掌',
-    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*e7_FTLA_REgAAAAAAAAAAAAAARInAQ',
+    url:
+        'https://mdn.alipayobjects.com/mars/afts/file/A*e7_FTLA_REgAAAAAAAAAAAAAARInAQ',
     description: '购物节庆祝特效',
   ),
   EffectResource(
     name: '敬业福弹卡',
-    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*D4ixTaUS-HoAAAAAAAAAAAAADlB4AQ',
+    url:
+        'https://mdn.alipayobjects.com/mars/afts/file/A*D4ixTaUS-HoAAAAAAAAAAAAADlB4AQ',
     description: '集五福弹卡特效',
   ),
   EffectResource(
     name: '七夕福利倒计时',
-    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*OW2VSKK3bWIAAAAAAAAAAAAADlB4AQ',
+    url:
+        'https://mdn.alipayobjects.com/mars/afts/file/A*OW2VSKK3bWIAAAAAAAAAAAAADlB4AQ',
     description: '七夕节倒计时特效',
   ),
   EffectResource(
     name: '天猫 618',
-    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*wIkMSokvwCgAAAAAAAAAAAAAARInAQ',
+    url:
+        'https://mdn.alipayobjects.com/mars/afts/file/A*wIkMSokvwCgAAAAAAAAAAAAAARInAQ',
     description: '618 购物节特效',
   ),
   EffectResource(
     name: '年度账单',
-    url: 'https://mdn.alipayobjects.com/mars/afts/file/A*VtHiR4iOuxYAAAAAAAAAAAAAARInAQ',
+    url:
+        'https://mdn.alipayobjects.com/mars/afts/file/A*VtHiR4iOuxYAAAAAAAAAAAAAARInAQ',
     description: '年度账单特效（40s）',
   ),
 ];
@@ -287,7 +295,7 @@ class _PlayerPageState extends State<PlayerPage> {
   Future<void> _loadScene([int? index]) async {
     final effectIndex = index ?? _selectedIndex;
     final effect = effectResources[effectIndex];
-    
+
     try {
       await _controller.loadScene(
         effect.url,
@@ -309,6 +317,43 @@ class _PlayerPageState extends State<PlayerPage> {
         );
       }
     }
+  }
+
+  void _enterFullscreen() {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return FullscreenPlayerPage(
+            controller: _controller,
+            effectName: effectResources[_selectedIndex].name,
+            onPrevious: _selectedIndex > 0
+                ? () {
+                    setState(() {
+                      _selectedIndex--;
+                    });
+                    _loadScene();
+                  }
+                : null,
+            onNext: _selectedIndex < effectResources.length - 1
+                ? () {
+                    setState(() {
+                      _selectedIndex++;
+                    });
+                    _loadScene();
+                  }
+                : null,
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 200),
+      ),
+    );
   }
 
   void _showEffectSelector() {
@@ -339,7 +384,8 @@ class _PlayerPageState extends State<PlayerPage> {
                 ),
                 // 标题
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
                     children: [
                       const Icon(Icons.auto_awesome, color: Colors.amber),
@@ -373,13 +419,14 @@ class _PlayerPageState extends State<PlayerPage> {
                       final isSelected = index == _selectedIndex;
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: isSelected 
-                              ? Theme.of(context).primaryColor 
+                          backgroundColor: isSelected
+                              ? Theme.of(context).primaryColor
                               : Colors.grey[200],
                           child: Text(
                             '${index + 1}',
                             style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.grey[600],
+                              color:
+                                  isSelected ? Colors.white : Colors.grey[600],
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -387,7 +434,9 @@ class _PlayerPageState extends State<PlayerPage> {
                         title: Text(
                           effect.name,
                           style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
                         ),
                         subtitle: Text(
@@ -397,8 +446,9 @@ class _PlayerPageState extends State<PlayerPage> {
                             fontSize: 12,
                           ),
                         ),
-                        trailing: isSelected 
-                            ? const Icon(Icons.check_circle, color: Colors.green)
+                        trailing: isSelected
+                            ? const Icon(Icons.check_circle,
+                                color: Colors.green)
                             : const Icon(Icons.play_circle_outline),
                         selected: isSelected,
                         onTap: () {
@@ -423,7 +473,7 @@ class _PlayerPageState extends State<PlayerPage> {
   @override
   Widget build(BuildContext context) {
     final currentEffect = effectResources[_selectedIndex];
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Galacean 播放器'),
@@ -474,53 +524,95 @@ class _PlayerPageState extends State<PlayerPage> {
               ],
             ),
           ),
-          
+
           // 播放器视图
           Expanded(
-            child: Container(
-              color: Colors.black,
-              child: Stack(
-                children: [
-                  GalaceanPlayerWidget(
-                    controller: _controller,
-                    placeholder: const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
+            child: GestureDetector(
+              onDoubleTap: _enterFullscreen,
+              child: Container(
+                color: Colors.black,
+                child: Stack(
+                  children: [
+                    GalaceanPlayerWidget(
+                      controller: _controller,
+                      placeholder: const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      ),
+                      errorBuilder: (context, error) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 48,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                '播放器错误',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                error,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    // 全屏按钮
+                    Positioned(
+                      right: 12,
+                      bottom: 12,
+                      child: GestureDetector(
+                        onTap: _enterFullscreen,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.fullscreen,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
                       ),
                     ),
-                    errorBuilder: (context, error) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              color: Colors.red,
-                              size: 48,
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              '播放器错误',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              error,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+                    // 双击提示
+                    Positioned(
+                      left: 12,
+                      bottom: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(4),
                         ),
-                      );
-                    },
-                  ),
-                ],
+                        child: const Text(
+                          '双击全屏',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -570,7 +662,8 @@ class _PlayerPageState extends State<PlayerPage> {
                     _buildControlButton(
                       icon: Icons.file_download,
                       label: '加载',
-                      onPressed: _controller.isInitialized ? () => _loadScene() : null,
+                      onPressed:
+                          _controller.isInitialized ? () => _loadScene() : null,
                     ),
                     _buildControlButton(
                       icon: Icons.play_arrow,
@@ -589,7 +682,8 @@ class _PlayerPageState extends State<PlayerPage> {
                     _buildControlButton(
                       icon: Icons.skip_next,
                       label: '下一个',
-                      onPressed: _controller.isInitialized && _selectedIndex < effectResources.length - 1
+                      onPressed: _controller.isInitialized &&
+                              _selectedIndex < effectResources.length - 1
                           ? () {
                               setState(() {
                                 _selectedIndex++;
@@ -673,5 +767,278 @@ class _PlayerPageState extends State<PlayerPage> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+}
+
+/// 全屏播放页面
+class FullscreenPlayerPage extends StatefulWidget {
+  final GalaceanPlayerController controller;
+  final String effectName;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+
+  const FullscreenPlayerPage({
+    super.key,
+    required this.controller,
+    required this.effectName,
+    this.onPrevious,
+    this.onNext,
+  });
+
+  @override
+  State<FullscreenPlayerPage> createState() => _FullscreenPlayerPageState();
+}
+
+class _FullscreenPlayerPageState extends State<FullscreenPlayerPage> {
+  bool _showControls = true;
+  Timer? _hideControlsTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // 进入全屏模式
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.portraitUp,
+    ]);
+    _startHideControlsTimer();
+  }
+
+  @override
+  void dispose() {
+    _hideControlsTimer?.cancel();
+    // 退出全屏模式
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    super.dispose();
+  }
+
+  void _startHideControlsTimer() {
+    _hideControlsTimer?.cancel();
+    _hideControlsTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _showControls = false;
+        });
+      }
+    });
+  }
+
+  void _toggleControls() {
+    setState(() {
+      _showControls = !_showControls;
+    });
+    if (_showControls) {
+      _startHideControlsTimer();
+    }
+  }
+
+  void _exitFullscreen() {
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: GestureDetector(
+        onTap: _toggleControls,
+        onDoubleTap: _exitFullscreen,
+        child: Stack(
+          children: [
+            // 播放器视图（全屏）
+            Positioned.fill(
+              child: GalaceanPlayerWidget(
+                controller: widget.controller,
+                placeholder: const Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                  ),
+                ),
+                errorBuilder: (context, error) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          error,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // 控制层
+            if (_showControls) ...[
+              // 顶部栏
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 8,
+                    left: 16,
+                    right: 16,
+                    bottom: 8,
+                  ),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.black54, Colors.transparent],
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.fullscreen_exit, color: Colors.white),
+                        onPressed: _exitFullscreen,
+                        tooltip: '退出全屏',
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.effectName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 底部控制栏
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).padding.bottom + 16,
+                    left: 16,
+                    right: 16,
+                    top: 16,
+                  ),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [Colors.black54, Colors.transparent],
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // 上一个
+                      _buildFullscreenButton(
+                        icon: Icons.skip_previous,
+                        onPressed: widget.onPrevious != null
+                            ? () {
+                                widget.onPrevious?.call();
+                                _startHideControlsTimer();
+                              }
+                            : null,
+                      ),
+                      // 播放/暂停
+                      StreamBuilder<GalaceanPlayerState>(
+                        stream: widget.controller.stateStream,
+                        builder: (context, snapshot) {
+                          final isPlaying = snapshot.data == GalaceanPlayerState.playing;
+                          return _buildFullscreenButton(
+                            icon: isPlaying ? Icons.pause : Icons.play_arrow,
+                            size: 48,
+                            onPressed: () {
+                              if (isPlaying) {
+                                widget.controller.pause();
+                              } else {
+                                widget.controller.resume();
+                              }
+                              _startHideControlsTimer();
+                            },
+                          );
+                        },
+                      ),
+                      // 重播
+                      _buildFullscreenButton(
+                        icon: Icons.replay,
+                        onPressed: () {
+                          widget.controller.replay();
+                          _startHideControlsTimer();
+                        },
+                      ),
+                      // 下一个
+                      _buildFullscreenButton(
+                        icon: Icons.skip_next,
+                        onPressed: widget.onNext != null
+                            ? () {
+                                widget.onNext?.call();
+                                _startHideControlsTimer();
+                              }
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 双击提示
+              Positioned(
+                bottom: MediaQuery.of(context).padding.bottom + 80,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Text(
+                      '双击退出全屏',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFullscreenButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+    double size = 36,
+  }) {
+    return IconButton(
+      icon: Icon(icon, color: onPressed != null ? Colors.white : Colors.white38),
+      iconSize: size,
+      onPressed: onPressed,
+    );
   }
 }
