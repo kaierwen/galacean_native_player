@@ -1,0 +1,7 @@
+framework module GalaceanEffects {
+    umbrella header "GEPlayer.h"
+    header "GEUnzipProtocol.h"
+    
+    export *
+    module * { export * }
+}

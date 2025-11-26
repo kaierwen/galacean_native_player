@@ -5,6 +5,9 @@ public class GalaceanNativePlayerPlugin: NSObject, FlutterPlugin {
   private static let sdkVersion = "1.0.0"
   
   public static func register(with registrar: FlutterPluginRegistrar) {
+    // 初始化 ZIP 解压处理器（必须在使用 GEPlayer 之前）
+    GEUnzipSetup.shared.setup()
+    
     let channel = FlutterMethodChannel(name: "galacean_native_player", binaryMessenger: registrar.messenger())
     let instance = GalaceanNativePlayerPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)

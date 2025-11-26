@@ -41,17 +41,10 @@ android {
     sourceSets {
         main.java.srcDirs += "src/main/kotlin"
         test.java.srcDirs += "src/test/kotlin"
-        // jniLibs 包含 libmarsnative.so 和 libc++_shared.so
-        main.jniLibs.srcDirs += "src/main/jniLibs"
     }
 
     defaultConfig {
         minSdk = 21
-        
-        // 指定支持的 ABI
-        ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a'
-        }
     }
 
     testOptions {
@@ -68,8 +61,12 @@ android {
 }
 
 dependencies {
-    // Galacean Effects SDK - 使用从 AAR 提取的 JAR 文件
-    // JAR 包含 Java/Kotlin 类，SO 库在 jniLibs 目录中
+    // Galacean Effects SDK
+    // 说明：Flutter 插件本身会被打包成 AAR，Gradle 不支持 AAR 嵌套 AAR
+    // 因此需要将原始 AAR 拆分：
+    // - classes.jar -> galaceanEffects.jar（Java 类）
+    // - jni/*.so -> 由 AAR 自动合并（libmarsnative.so）
+    // - libc++_shared.so -> 需要单独提供（AAR 中未包含）
     implementation files('./libs/galaceanEffects.jar')
     
     // SDK 依赖的第三方库
