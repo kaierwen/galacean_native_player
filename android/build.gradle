@@ -68,10 +68,11 @@ android {
 }
 
 dependencies {
-    // Galacean Effects SDK
-    // 注意：Flutter 插件不能直接依赖本地 AAR，需要通过 flatDir 方式引入
-    // 或者使用 Maven 仓库依赖
-    compileOnly files('./libs/galaceanEffects.aar')
+    // Galacean Effects SDK - 使用从 AAR 提取的 JAR 文件
+    // JAR 包含 Java/Kotlin 类，SO 库在 jniLibs 目录中
+    implementation files('./libs/galaceanEffects.jar')
+    
+    // SDK 依赖的第三方库
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     implementation 'com.alibaba:fastjson:1.2.76'
     

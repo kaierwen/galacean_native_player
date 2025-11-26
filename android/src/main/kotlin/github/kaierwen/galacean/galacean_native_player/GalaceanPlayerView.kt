@@ -116,6 +116,9 @@ class GalaceanPlayerView(
             return
         }
         
+        // 用于确保 result 只被调用一次
+        var resultHandled = false
+        
         try {
             currentSceneUrl = url
             Log.d(TAG, "Loading scene: $url, autoPlay: $autoPlay")
@@ -144,6 +147,13 @@ class GalaceanPlayerView(
             gePlayer?.loadScene(object : GEPlayer.Callback {
                 override fun onResult(success: Boolean, errorMsg: String?) {
                     mainHandler.post {
+                        // 确保 result 只被调用一次
+                        if (resultHandled) {
+                            Log.w(TAG, "Result already handled, ignoring callback")
+                            return@post
+                        }
+                        resultHandled = true
+                        
                         if (success) {
                             Log.d(TAG, "Scene loaded successfully")
                             isSceneLoaded = true
@@ -153,13 +163,21 @@ class GalaceanPlayerView(
                             if (autoPlay) {
                                 playInternal(null)
                             }
-                            result.success(null)
+                            try {
+                                result.success(null)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error sending success result", e)
+                            }
                         } else {
                             Log.e(TAG, "Failed to load scene: $errorMsg")
                             isSceneLoaded = false
                             val error = errorMsg ?: "Unknown error"
                             invokeFlutterMethod("onError", error)
-                            result.error("LOAD_FAILED", error, null)
+                            try {
+                                result.error("LOAD_FAILED", error, null)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error sending error result", e)
+                            }
                         }
                     }
                 }
@@ -169,7 +187,10 @@ class GalaceanPlayerView(
             Log.e(TAG, "Load scene exception", e)
             val error = e.message ?: "Unknown error"
             invokeFlutterMethod("onError", error)
-            result.error("LOAD_ERROR", error, null)
+            if (!resultHandled) {
+                resultHandled = true
+                result.error("LOAD_ERROR", error, null)
+            }
         }
     }
 
@@ -197,6 +218,7 @@ class GalaceanPlayerView(
         try {
             Log.d(TAG, "Play, repeatCount: $repeatCount")
             
+            // play 的回调是播放结束时调用，不是开始播放时
             gePlayer?.play(repeatCount, object : GEPlayer.Callback {
                 override fun onResult(success: Boolean, errorMsg: String?) {
                     mainHandler.post {
@@ -216,12 +238,22 @@ class GalaceanPlayerView(
             
             isPlaying = true
             invokeFlutterMethod("onStateChanged", "playing")
-            result?.success(null)
+            
+            // result 立即返回，表示播放已开始
+            try {
+                result?.success(null)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error sending play result", e)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Play error", e)
             val error = e.message ?: "Unknown error"
             invokeFlutterMethod("onError", error)
-            result?.error("PLAY_ERROR", error, null)
+            try {
+                result?.error("PLAY_ERROR", error, null)
+            } catch (ex: Exception) {
+                Log.e(TAG, "Error sending play error result", ex)
+            }
         }
     }
 
