@@ -155,6 +155,26 @@ dependencies {
 }
 ```
 
+3. **重要**：添加 C++ 共享库依赖
+
+`libmarsnative.so` 依赖 `libc++_shared.so`，需要从 Android NDK 中复制到项目：
+
+```bash
+# 创建 jniLibs 目录
+mkdir -p android/app/src/main/jniLibs/arm64-v8a
+mkdir -p android/app/src/main/jniLibs/armeabi-v7a
+
+# 从 NDK 复制 libc++_shared.so（路径根据您的 NDK 版本调整）
+NDK_PATH="$ANDROID_HOME/ndk/<version>/toolchains/llvm/prebuilt/<platform>/sysroot/usr/lib"
+cp "$NDK_PATH/aarch64-linux-android/libc++_shared.so" android/app/src/main/jniLibs/arm64-v8a/
+cp "$NDK_PATH/arm-linux-androideabi/libc++_shared.so" android/app/src/main/jniLibs/armeabi-v7a/
+```
+
+或者直接从本插件的 example 项目中复制：
+```bash
+cp -r example/android/app/src/main/jniLibs android/app/src/main/
+```
+
 #### 配置权限
 
 在 `android/app/src/main/AndroidManifest.xml` 中添加必要的权限：

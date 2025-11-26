@@ -1,64 +1,73 @@
 import 'dart:async';
+
 import 'package:flutter/services.dart';
 
 /// Galacean 播放器状态
 enum GalaceanPlayerState {
   /// 未初始化
   uninitialized,
+
   /// 加载中
   loading,
+
   /// 就绪
   ready,
+
   /// 播放中
   playing,
+
   /// 暂停
   paused,
+
   /// 停止
   stopped,
+
   /// 错误
   error,
+
   /// 已销毁
   disposed,
 }
 
 /// Galacean 播放器控制器
-/// 
+///
 /// 用于控制 Galacean Effects 的播放、暂停、停止等操作
 class GalaceanPlayerController {
   /// 方法通道
   MethodChannel? _channel;
-  
+
   /// 播放器 ID
   int? _playerId;
-  
+
   /// 当前状态
   GalaceanPlayerState _state = GalaceanPlayerState.uninitialized;
-  
+
   /// 状态监听器
-  final StreamController<GalaceanPlayerState> _stateController = 
+  final StreamController<GalaceanPlayerState> _stateController =
       StreamController<GalaceanPlayerState>.broadcast();
-  
+
   /// 错误监听器
-  final StreamController<String> _errorController = 
+  final StreamController<String> _errorController =
       StreamController<String>.broadcast();
 
   /// 获取当前状态
   GalaceanPlayerState get state => _state;
-  
+
   /// 状态流
   Stream<GalaceanPlayerState> get stateStream => _stateController.stream;
-  
+
   /// 错误流
   Stream<String> get errorStream => _errorController.stream;
-  
+
   /// 是否已初始化
-  bool get isInitialized => _playerId != null && _state != GalaceanPlayerState.uninitialized;
-  
+  bool get isInitialized =>
+      _playerId != null && _state != GalaceanPlayerState.uninitialized;
+
   /// 是否正在播放
   bool get isPlaying => _state == GalaceanPlayerState.playing;
 
   /// 初始化播放器
-  /// 
+  ///
   /// [playerId] 播放器 ID，由 PlatformView 创建时传入
   Future<void> initialize(int playerId) async {
     _playerId = playerId;
@@ -68,14 +77,14 @@ class GalaceanPlayerController {
   }
 
   /// 加载特效资源
-  /// 
+  ///
   /// [url] 特效资源 URL，支持本地路径和网络地址
   /// [autoPlay] 加载完成后是否自动播放，默认为 true
   Future<void> loadScene(String url, {bool autoPlay = true}) async {
     if (!isInitialized) {
       throw StateError('播放器未初始化');
     }
-    
+
     try {
       _updateState(GalaceanPlayerState.loading);
       await _channel!.invokeMethod('loadScene', {
@@ -94,7 +103,7 @@ class GalaceanPlayerController {
     if (!isInitialized) {
       throw StateError('播放器未初始化');
     }
-    
+
     try {
       await _channel!.invokeMethod('play');
       _updateState(GalaceanPlayerState.playing);
@@ -109,7 +118,7 @@ class GalaceanPlayerController {
     if (!isInitialized) {
       throw StateError('播放器未初始化');
     }
-    
+
     try {
       await _channel!.invokeMethod('pause');
       _updateState(GalaceanPlayerState.paused);
@@ -124,7 +133,7 @@ class GalaceanPlayerController {
     if (!isInitialized) {
       throw StateError('播放器未初始化');
     }
-    
+
     try {
       await _channel!.invokeMethod('resume');
       _updateState(GalaceanPlayerState.playing);
@@ -139,7 +148,7 @@ class GalaceanPlayerController {
     if (!isInitialized) {
       throw StateError('播放器未初始化');
     }
-    
+
     try {
       await _channel!.invokeMethod('stop');
       _updateState(GalaceanPlayerState.stopped);
@@ -154,7 +163,7 @@ class GalaceanPlayerController {
     if (!isInitialized) {
       throw StateError('播放器未初始化');
     }
-    
+
     try {
       await _channel!.invokeMethod('replay');
       _updateState(GalaceanPlayerState.playing);
@@ -165,13 +174,13 @@ class GalaceanPlayerController {
   }
 
   /// 设置循环播放
-  /// 
+  ///
   /// [loop] 是否循环播放
   Future<void> setLoop(bool loop) async {
     if (!isInitialized) {
       throw StateError('播放器未初始化');
     }
-    
+
     try {
       await _channel!.invokeMethod('setLoop', {'loop': loop});
     } catch (e) {
@@ -181,13 +190,13 @@ class GalaceanPlayerController {
   }
 
   /// 设置播放速度
-  /// 
+  ///
   /// [speed] 播放速度，1.0 为正常速度
   Future<void> setSpeed(double speed) async {
     if (!isInitialized) {
       throw StateError('播放器未初始化');
     }
-    
+
     try {
       await _channel!.invokeMethod('setSpeed', {'speed': speed});
     } catch (e) {
@@ -201,7 +210,7 @@ class GalaceanPlayerController {
     if (!isInitialized) {
       throw StateError('播放器未初始化');
     }
-    
+
     try {
       final result = await _channel!.invokeMethod<double>('getCurrentTime');
       return result;
@@ -216,7 +225,7 @@ class GalaceanPlayerController {
     if (!isInitialized) {
       throw StateError('播放器未初始化');
     }
-    
+
     try {
       final result = await _channel!.invokeMethod<double>('getDuration');
       return result;
@@ -287,4 +296,3 @@ class GalaceanPlayerController {
     _playerId = null;
   }
 }
-
