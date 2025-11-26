@@ -243,6 +243,9 @@ class _PlayerPageState extends State<PlayerPage> {
   late final GalaceanPlayerController _controller;
   String _statusText = '未初始化';
   int _selectedIndex = 0;
+  bool _isFullscreen = false;
+  bool _showFullscreenControls = true;
+  Timer? _hideControlsTimer;
 
   @override
   void initState() {
@@ -320,40 +323,48 @@ class _PlayerPageState extends State<PlayerPage> {
   }
 
   void _enterFullscreen() {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return FullscreenPlayerPage(
-            controller: _controller,
-            effectName: effectResources[_selectedIndex].name,
-            onPrevious: _selectedIndex > 0
-                ? () {
-                    setState(() {
-                      _selectedIndex--;
-                    });
-                    _loadScene();
-                  }
-                : null,
-            onNext: _selectedIndex < effectResources.length - 1
-                ? () {
-                    setState(() {
-                      _selectedIndex++;
-                    });
-                    _loadScene();
-                  }
-                : null,
-          );
-        },
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 200),
-      ),
-    );
+    setState(() {
+      _isFullscreen = true;
+      _showFullscreenControls = true;
+    });
+    // 进入全屏模式
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.portraitUp,
+    ]);
+    _startHideControlsTimer();
+  }
+
+  void _exitFullscreen() {
+    _hideControlsTimer?.cancel();
+    setState(() {
+      _isFullscreen = false;
+    });
+    // 退出全屏模式
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  }
+
+  void _startHideControlsTimer() {
+    _hideControlsTimer?.cancel();
+    _hideControlsTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && _isFullscreen) {
+        setState(() {
+          _showFullscreenControls = false;
+        });
+      }
+    });
+  }
+
+  void _toggleFullscreenControls() {
+    setState(() {
+      _showFullscreenControls = !_showFullscreenControls;
+    });
+    if (_showFullscreenControls) {
+      _startHideControlsTimer();
+    }
   }
 
   void _showEffectSelector() {
@@ -474,6 +485,12 @@ class _PlayerPageState extends State<PlayerPage> {
   Widget build(BuildContext context) {
     final currentEffect = effectResources[_selectedIndex];
 
+    // 全屏模式
+    if (_isFullscreen) {
+      return _buildFullscreenView(currentEffect);
+    }
+
+    // 普通模式
     return Scaffold(
       appBar: AppBar(
         title: const Text('Galacean 播放器'),
@@ -533,45 +550,7 @@ class _PlayerPageState extends State<PlayerPage> {
                 color: Colors.black,
                 child: Stack(
                   children: [
-                    GalaceanPlayerWidget(
-                      controller: _controller,
-                      placeholder: const Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                        ),
-                      ),
-                      errorBuilder: (context, error) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.error_outline,
-                                color: Colors.red,
-                                size: 48,
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                '播放器错误',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                error,
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                    _buildPlayerWidget(),
                     // 全屏按钮
                     Positioned(
                       right: 12,
@@ -597,7 +576,8 @@ class _PlayerPageState extends State<PlayerPage> {
                       left: 12,
                       bottom: 12,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.black54,
                           borderRadius: BorderRadius.circular(4),
@@ -763,268 +743,174 @@ class _PlayerPageState extends State<PlayerPage> {
     );
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-}
+  /// 构建全屏视图
+  Widget _buildFullscreenView(EffectResource currentEffect) {
+    return WillPopScope(
+      onWillPop: () async {
+        _exitFullscreen();
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: GestureDetector(
+          onTap: _toggleFullscreenControls,
+          onDoubleTap: _exitFullscreen,
+          child: Stack(
+            children: [
+              // 播放器视图（全屏）
+              Positioned.fill(
+                child: _buildPlayerWidget(),
+              ),
 
-/// 全屏播放页面
-class FullscreenPlayerPage extends StatefulWidget {
-  final GalaceanPlayerController controller;
-  final String effectName;
-  final VoidCallback? onPrevious;
-  final VoidCallback? onNext;
-
-  const FullscreenPlayerPage({
-    super.key,
-    required this.controller,
-    required this.effectName,
-    this.onPrevious,
-    this.onNext,
-  });
-
-  @override
-  State<FullscreenPlayerPage> createState() => _FullscreenPlayerPageState();
-}
-
-class _FullscreenPlayerPageState extends State<FullscreenPlayerPage> {
-  bool _showControls = true;
-  Timer? _hideControlsTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    // 进入全屏模式
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.portraitUp,
-    ]);
-    _startHideControlsTimer();
-  }
-
-  @override
-  void dispose() {
-    _hideControlsTimer?.cancel();
-    // 退出全屏模式
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    super.dispose();
-  }
-
-  void _startHideControlsTimer() {
-    _hideControlsTimer?.cancel();
-    _hideControlsTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _showControls = false;
-        });
-      }
-    });
-  }
-
-  void _toggleControls() {
-    setState(() {
-      _showControls = !_showControls;
-    });
-    if (_showControls) {
-      _startHideControlsTimer();
-    }
-  }
-
-  void _exitFullscreen() {
-    Navigator.pop(context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTap: _toggleControls,
-        onDoubleTap: _exitFullscreen,
-        child: Stack(
-          children: [
-            // 播放器视图（全屏）
-            Positioned.fill(
-              child: GalaceanPlayerWidget(
-                controller: widget.controller,
-                placeholder: const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                  ),
-                ),
-                errorBuilder: (context, error) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+              // 控制层
+              if (_showFullscreenControls) ...[
+                // 顶部栏
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: EdgeInsets.only(
+                      top: MediaQuery.of(context).padding.top + 8,
+                      left: 16,
+                      right: 16,
+                      bottom: 8,
+                    ),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.black54, Colors.transparent],
+                      ),
+                    ),
+                    child: Row(
                       children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.red,
-                          size: 48,
+                        IconButton(
+                          icon: const Icon(Icons.fullscreen_exit, color: Colors.white),
+                          onPressed: _exitFullscreen,
+                          tooltip: '退出全屏',
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          error,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            currentEffect.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
-                  );
-                },
-              ),
-            ),
-
-            // 控制层
-            if (_showControls) ...[
-              // 顶部栏
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top + 8,
-                    left: 16,
-                    right: 16,
-                    bottom: 8,
                   ),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.black54, Colors.transparent],
+                ),
+
+                // 底部控制栏
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).padding.bottom + 16,
+                      left: 16,
+                      right: 16,
+                      top: 16,
+                    ),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [Colors.black54, Colors.transparent],
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // 上一个
+                        _buildFullscreenButton(
+                          icon: Icons.skip_previous,
+                          onPressed: _selectedIndex > 0
+                              ? () {
+                                  setState(() {
+                                    _selectedIndex--;
+                                  });
+                                  _loadScene();
+                                  _startHideControlsTimer();
+                                }
+                              : null,
+                        ),
+                        // 播放/暂停
+                        StreamBuilder<GalaceanPlayerState>(
+                          stream: _controller.stateStream,
+                          builder: (context, snapshot) {
+                            final isPlaying = snapshot.data == GalaceanPlayerState.playing;
+                            return _buildFullscreenButton(
+                              icon: isPlaying ? Icons.pause : Icons.play_arrow,
+                              size: 48,
+                              onPressed: () {
+                                if (isPlaying) {
+                                  _controller.pause();
+                                } else {
+                                  _controller.resume();
+                                }
+                                _startHideControlsTimer();
+                              },
+                            );
+                          },
+                        ),
+                        // 重播
+                        _buildFullscreenButton(
+                          icon: Icons.replay,
+                          onPressed: () {
+                            _controller.replay();
+                            _startHideControlsTimer();
+                          },
+                        ),
+                        // 下一个
+                        _buildFullscreenButton(
+                          icon: Icons.skip_next,
+                          onPressed: _selectedIndex < effectResources.length - 1
+                              ? () {
+                                  setState(() {
+                                    _selectedIndex++;
+                                  });
+                                  _loadScene();
+                                  _startHideControlsTimer();
+                                }
+                              : null,
+                        ),
+                      ],
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.fullscreen_exit, color: Colors.white),
-                        onPressed: _exitFullscreen,
-                        tooltip: '退出全屏',
+                ),
+
+                // 双击提示
+                Positioned(
+                  bottom: MediaQuery.of(context).padding.bottom + 80,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          widget.effectName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      child: const Text(
+                        '双击退出全屏',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 底部控制栏
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).padding.bottom + 16,
-                    left: 16,
-                    right: 16,
-                    top: 16,
-                  ),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [Colors.black54, Colors.transparent],
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      // 上一个
-                      _buildFullscreenButton(
-                        icon: Icons.skip_previous,
-                        onPressed: widget.onPrevious != null
-                            ? () {
-                                widget.onPrevious?.call();
-                                _startHideControlsTimer();
-                              }
-                            : null,
-                      ),
-                      // 播放/暂停
-                      StreamBuilder<GalaceanPlayerState>(
-                        stream: widget.controller.stateStream,
-                        builder: (context, snapshot) {
-                          final isPlaying = snapshot.data == GalaceanPlayerState.playing;
-                          return _buildFullscreenButton(
-                            icon: isPlaying ? Icons.pause : Icons.play_arrow,
-                            size: 48,
-                            onPressed: () {
-                              if (isPlaying) {
-                                widget.controller.pause();
-                              } else {
-                                widget.controller.resume();
-                              }
-                              _startHideControlsTimer();
-                            },
-                          );
-                        },
-                      ),
-                      // 重播
-                      _buildFullscreenButton(
-                        icon: Icons.replay,
-                        onPressed: () {
-                          widget.controller.replay();
-                          _startHideControlsTimer();
-                        },
-                      ),
-                      // 下一个
-                      _buildFullscreenButton(
-                        icon: Icons.skip_next,
-                        onPressed: widget.onNext != null
-                            ? () {
-                                widget.onNext?.call();
-                                _startHideControlsTimer();
-                              }
-                            : null,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 双击提示
-              Positioned(
-                bottom: MediaQuery.of(context).padding.bottom + 80,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Text(
-                      '双击退出全屏',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -1040,5 +926,55 @@ class _FullscreenPlayerPageState extends State<FullscreenPlayerPage> {
       iconSize: size,
       onPressed: onPressed,
     );
+  }
+
+  /// 构建播放器 Widget（复用同一个实例）
+  Widget _buildPlayerWidget() {
+    return GalaceanPlayerWidget(
+      controller: _controller,
+      placeholder: const Center(
+        child: CircularProgressIndicator(
+          color: Colors.white,
+        ),
+      ),
+      errorBuilder: (context, error) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '播放器错误',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _hideControlsTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
   }
 }
