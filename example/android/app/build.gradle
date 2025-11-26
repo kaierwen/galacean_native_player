@@ -28,11 +28,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        
-        // 配置 NDK，指定支持的 ABI
-        ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a'
-        }
     }
 
     buildTypes {
@@ -48,7 +43,5 @@ flutter {
     source = "../.."
 }
 
-dependencies {
-    // Galacean Effects SDK - 使用该插件的应用需要添加此依赖
-    implementation files('libs/galaceanEffects.aar')
-}
+// 注意：不再需要手动添加 galaceanEffects.aar 和 libc++_shared.so
+// 这些依赖已经集成到插件中

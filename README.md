@@ -142,42 +142,11 @@ GalaceanPlayerState state = controller.state;
 
 ### Android
 
-#### 添加 Galacean Effects SDK
+Android 平台的所有依赖（包括 `galaceanEffects.aar`、`libmarsnative.so`、`libc++_shared.so`）已经集成到插件中，**无需额外配置**。
 
-1. 将 `galaceanEffects.aar` 文件复制到您项目的 `android/app/libs/` 目录下
+#### 配置权限（如需加载网络资源）
 
-2. 在 `android/app/build.gradle` 中添加依赖：
-
-```gradle
-dependencies {
-    // Galacean Effects SDK
-    implementation files('libs/galaceanEffects.aar')
-}
-```
-
-3. **重要**：添加 C++ 共享库依赖
-
-`libmarsnative.so` 依赖 `libc++_shared.so`，需要从 Android NDK 中复制到项目：
-
-```bash
-# 创建 jniLibs 目录
-mkdir -p android/app/src/main/jniLibs/arm64-v8a
-mkdir -p android/app/src/main/jniLibs/armeabi-v7a
-
-# 从 NDK 复制 libc++_shared.so（路径根据您的 NDK 版本调整）
-NDK_PATH="$ANDROID_HOME/ndk/<version>/toolchains/llvm/prebuilt/<platform>/sysroot/usr/lib"
-cp "$NDK_PATH/aarch64-linux-android/libc++_shared.so" android/app/src/main/jniLibs/arm64-v8a/
-cp "$NDK_PATH/arm-linux-androideabi/libc++_shared.so" android/app/src/main/jniLibs/armeabi-v7a/
-```
-
-或者直接从本插件的 example 项目中复制：
-```bash
-cp -r example/android/app/src/main/jniLibs android/app/src/main/
-```
-
-#### 配置权限
-
-在 `android/app/src/main/AndroidManifest.xml` 中添加必要的权限：
+在 `android/app/src/main/AndroidManifest.xml` 中添加网络权限：
 
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />

@@ -41,10 +41,17 @@ android {
     sourceSets {
         main.java.srcDirs += "src/main/kotlin"
         test.java.srcDirs += "src/test/kotlin"
+        // jniLibs 包含 libmarsnative.so 和 libc++_shared.so
+        main.jniLibs.srcDirs += "src/main/jniLibs"
     }
 
     defaultConfig {
         minSdk = 21
+        
+        // 指定支持的 ABI
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
     }
 
     testOptions {
