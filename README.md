@@ -144,12 +144,14 @@ GalaceanPlayerState state = controller.state;
 
 #### 添加 Galacean Effects SDK
 
-在 `android/build.gradle` 中添加依赖：
+1. 将 `galaceanEffects.aar` 文件复制到您项目的 `android/app/libs/` 目录下
+
+2. 在 `android/app/build.gradle` 中添加依赖：
 
 ```gradle
 dependencies {
-    // TODO: 添加实际的 Galacean Effects Android SDK
-    // implementation 'com.galacean:effects-android:x.x.x'
+    // Galacean Effects SDK
+    implementation files('libs/galaceanEffects.aar')
 }
 ```
 

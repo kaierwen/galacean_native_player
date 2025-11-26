@@ -42,3 +42,8 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Galacean Effects SDK - 使用该插件的应用需要添加此依赖
+    implementation files('libs/galaceanEffects.aar')
+}

@@ -351,6 +351,13 @@ class _PlayerPageState extends State<PlayerPage> {
                           : null,
                     ),
                     _buildControlButton(
+                      icon: Icons.play_circle,
+                      label: '恢复',
+                      onPressed: _controller.isInitialized
+                          ? () => _controller.resume()
+                          : null,
+                    ),
+                    _buildControlButton(
                       icon: Icons.stop,
                       label: '停止',
                       onPressed: _controller.isInitialized

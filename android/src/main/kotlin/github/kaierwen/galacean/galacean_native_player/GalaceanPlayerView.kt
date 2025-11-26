@@ -7,25 +7,18 @@ import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.TextView
+import com.antgroup.galacean.effects.GEPlayer
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
 
-// TODO: 取消注释以下导入语句（需要确认正确的包名）
-// import com.alibaba.gaiax.effects.GEPlayer
-// import com.alibaba.gaiax.effects.GEPlayerParams
-// import com.alibaba.gaiax.effects.listener.GEPlayerListener
-
 /**
  * Galacean Player View
- * Android 端的播放器视图实现
+ * Android 端的播放器视图实现，集成 Galacean Effects Native SDK
  * 
- * 注意：由于 SDK 包名可能有变化，当前使用模拟实现
- * 需要根据实际的 SDK 包名进行调整
- * 
- * 参考文档：https://github.com/galacean/effects-native-examples
+ * SDK 包名: com.antgroup.galacean.effects
+ * 主要类: GEPlayer, GEPlayer.GEPlayerParams, GEPlayer.Callback
  */
 class GalaceanPlayerView(
     private val context: Context,
@@ -41,14 +34,16 @@ class GalaceanPlayerView(
     private val methodChannel: MethodChannel
     private val mainHandler = Handler(Looper.getMainLooper())
     
-    // TODO: 取消注释以使用真实的 GEPlayer
-    // private var gePlayer: GEPlayer? = null
+    // Galacean Player 实例
+    private var gePlayer: GEPlayer? = null
     
     private var isPlaying = false
     private var isLooping = false
+    private var repeatCount = 0  // 0 表示无限循环，>0 表示播放次数
     private var playbackSpeed = 1.0
     private var currentSceneUrl: String? = null
     private var isInitialized = false
+    private var isSceneLoaded = false
 
     init {
         // 创建方法通道
@@ -58,68 +53,8 @@ class GalaceanPlayerView(
         // 设置容器背景色
         container.setBackgroundColor(Color.TRANSPARENT)
         
-        // 初始化播放器
-        initializePlayer()
-    }
-    
-    /**
-     * 初始化播放器
-     */
-    private fun initializePlayer() {
-        try {
-            // TODO: 取消注释以下代码使用真实的 GEPlayer
-            // 需要确认正确的包名和类名
-            /*
-            gePlayer = GEPlayer(context)
-            
-            gePlayer?.setPlayerListener(object : GEPlayerListener {
-                override fun onPlayerReady(player: GEPlayer) {
-                    Log.d(TAG, "Player ready")
-                    isInitialized = true
-                    invokeFlutterMethod("onStateChanged", "ready")
-                }
-                
-                override fun onPlayerPlayStateChanged(player: GEPlayer, playing: Boolean) {
-                    Log.d(TAG, "Play state changed: $playing")
-                    isPlaying = playing
-                    val state = if (playing) "playing" else "paused"
-                    invokeFlutterMethod("onStateChanged", state)
-                }
-                
-                override fun onPlayerEnd(player: GEPlayer) {
-                    Log.d(TAG, "Player end")
-                    isPlaying = false
-                    invokeFlutterMethod("onStateChanged", "stopped")
-                    invokeFlutterMethod("onPlayComplete", null)
-                }
-                
-                override fun onPlayerError(player: GEPlayer, errorCode: Int, errorMsg: String) {
-                    Log.e(TAG, "Player error: $errorCode - $errorMsg")
-                    val error = "Error $errorCode: $errorMsg"
-                    invokeFlutterMethod("onError", error)
-                }
-            })
-            
-            container.addView(gePlayer, FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            ))
-            */
-            
-            // 临时显示提示文本
-            val textView = TextView(context)
-            textView.text = "Galacean Player View\n等待 SDK 包名确认"
-            textView.setTextColor(Color.WHITE)
-            textView.textSize = 16f
-            textView.gravity = android.view.Gravity.CENTER
-            container.addView(textView)
-            
-            isInitialized = true
-            Log.d(TAG, "Player initialized (mock mode)")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize player", e)
-            invokeFlutterMethod("onError", "Failed to initialize: ${e.message}")
-        }
+        isInitialized = true
+        Log.d(TAG, "GalaceanPlayerView created, id: $id")
     }
 
     override fun getView(): View {
@@ -142,6 +77,9 @@ class GalaceanPlayerView(
             }
             "pause" -> {
                 pause(result)
+            }
+            "resume" -> {
+                resume(result)
             }
             "stop" -> {
                 stop(result)
@@ -184,47 +122,48 @@ class GalaceanPlayerView(
             
             invokeFlutterMethod("onStateChanged", "loading")
             
-            // TODO: 取消注释以下代码使用真实的 GEPlayer
-            /*
-            val params = GEPlayerParams().apply {
+            // 先销毁旧的播放器
+            destroyPlayer()
+            
+            // 创建播放参数
+            val params = GEPlayer.GEPlayerParams().apply {
                 this.url = url
-                this.autoPlay = autoPlay
-                this.isLoop = isLooping
             }
             
-            gePlayer?.load(params, object : GEPlayerListener {
-                override fun onPlayerReady(player: GEPlayer) {
-                    Log.d(TAG, "Scene loaded successfully")
-                    invokeFlutterMethod("onLoadComplete", null)
-                    result.success(null)
-                }
-                
-                override fun onPlayerPlayStateChanged(player: GEPlayer, playing: Boolean) {
-                    // 已在全局监听器中处理
-                }
-                
-                override fun onPlayerEnd(player: GEPlayer) {
-                    // 已在全局监听器中处理
-                }
-                
-                override fun onPlayerError(player: GEPlayer, errorCode: Int, errorMsg: String) {
-                    Log.e(TAG, "Failed to load scene: $errorCode - $errorMsg")
-                    val error = "Load failed ($errorCode): $errorMsg"
-                    invokeFlutterMethod("onError", error)
-                    result.error("LOAD_FAILED", error, null)
+            // 创建新的 GEPlayer
+            gePlayer = GEPlayer(context, params)
+            
+            // 添加到容器
+            container.removeAllViews()
+            container.addView(gePlayer, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            ))
+            
+            // 加载场景
+            gePlayer?.loadScene(object : GEPlayer.Callback {
+                override fun onResult(success: Boolean, errorMsg: String?) {
+                    mainHandler.post {
+                        if (success) {
+                            Log.d(TAG, "Scene loaded successfully")
+                            isSceneLoaded = true
+                            invokeFlutterMethod("onLoadComplete", null)
+                            invokeFlutterMethod("onStateChanged", "ready")
+                            
+                            if (autoPlay) {
+                                playInternal(null)
+                            }
+                            result.success(null)
+                        } else {
+                            Log.e(TAG, "Failed to load scene: $errorMsg")
+                            isSceneLoaded = false
+                            val error = errorMsg ?: "Unknown error"
+                            invokeFlutterMethod("onError", error)
+                            result.error("LOAD_FAILED", error, null)
+                        }
+                    }
                 }
             })
-            */
-            
-            // 临时模拟实现
-            mainHandler.postDelayed({
-                invokeFlutterMethod("onLoadComplete", null)
-                if (autoPlay) {
-                    isPlaying = true
-                    invokeFlutterMethod("onStateChanged", "playing")
-                }
-                result.success(null)
-            }, 500)
             
         } catch (e: Exception) {
             Log.e(TAG, "Load scene exception", e)
@@ -238,14 +177,43 @@ class GalaceanPlayerView(
      * 播放
      */
     private fun play(result: MethodChannel.Result?) {
-        if (!isInitialized) {
+        playInternal(result)
+    }
+    
+    /**
+     * 内部播放方法
+     */
+    private fun playInternal(result: MethodChannel.Result?) {
+        if (!isInitialized || gePlayer == null) {
             result?.error("NOT_INITIALIZED", "Player not initialized", null)
             return
         }
         
+        if (!isSceneLoaded) {
+            result?.error("SCENE_NOT_LOADED", "Scene not loaded yet", null)
+            return
+        }
+        
         try {
-            Log.d(TAG, "Play")
-            // TODO: gePlayer?.play()
+            Log.d(TAG, "Play, repeatCount: $repeatCount")
+            
+            gePlayer?.play(repeatCount, object : GEPlayer.Callback {
+                override fun onResult(success: Boolean, errorMsg: String?) {
+                    mainHandler.post {
+                        if (success) {
+                            Log.d(TAG, "Play completed")
+                            isPlaying = false
+                            invokeFlutterMethod("onStateChanged", "stopped")
+                            invokeFlutterMethod("onPlayComplete", null)
+                        } else {
+                            Log.e(TAG, "Play error: $errorMsg")
+                            isPlaying = false
+                            invokeFlutterMethod("onError", errorMsg ?: "Play failed")
+                        }
+                    }
+                }
+            })
+            
             isPlaying = true
             invokeFlutterMethod("onStateChanged", "playing")
             result?.success(null)
@@ -261,14 +229,14 @@ class GalaceanPlayerView(
      * 暂停
      */
     private fun pause(result: MethodChannel.Result) {
-        if (!isInitialized) {
+        if (!isInitialized || gePlayer == null) {
             result.error("NOT_INITIALIZED", "Player not initialized", null)
             return
         }
         
         try {
             Log.d(TAG, "Pause")
-            // TODO: gePlayer?.pause()
+            gePlayer?.pause()
             isPlaying = false
             invokeFlutterMethod("onStateChanged", "paused")
             result.success(null)
@@ -281,17 +249,40 @@ class GalaceanPlayerView(
     }
 
     /**
+     * 恢复播放
+     */
+    private fun resume(result: MethodChannel.Result) {
+        if (!isInitialized || gePlayer == null) {
+            result.error("NOT_INITIALIZED", "Player not initialized", null)
+            return
+        }
+        
+        try {
+            Log.d(TAG, "Resume")
+            gePlayer?.resume()
+            isPlaying = true
+            invokeFlutterMethod("onStateChanged", "playing")
+            result.success(null)
+        } catch (e: Exception) {
+            Log.e(TAG, "Resume error", e)
+            val error = e.message ?: "Unknown error"
+            invokeFlutterMethod("onError", error)
+            result.error("RESUME_ERROR", error, null)
+        }
+    }
+
+    /**
      * 停止
      */
     private fun stop(result: MethodChannel.Result) {
-        if (!isInitialized) {
+        if (!isInitialized || gePlayer == null) {
             result.error("NOT_INITIALIZED", "Player not initialized", null)
             return
         }
         
         try {
             Log.d(TAG, "Stop")
-            // TODO: gePlayer?.stop()
+            gePlayer?.stop()
             isPlaying = false
             invokeFlutterMethod("onStateChanged", "stopped")
             result.success(null)
@@ -307,17 +298,15 @@ class GalaceanPlayerView(
      * 重新播放
      */
     private fun replay(result: MethodChannel.Result) {
-        if (!isInitialized) {
+        if (!isInitialized || gePlayer == null) {
             result.error("NOT_INITIALIZED", "Player not initialized", null)
             return
         }
         
         try {
             Log.d(TAG, "Replay")
-            // TODO: gePlayer?.stop(); gePlayer?.play()
-            isPlaying = true
-            invokeFlutterMethod("onStateChanged", "playing")
-            result.success(null)
+            gePlayer?.stop()
+            playInternal(result)
         } catch (e: Exception) {
             Log.e(TAG, "Replay error", e)
             val error = e.message ?: "Unknown error"
@@ -330,15 +319,11 @@ class GalaceanPlayerView(
      * 设置循环播放
      */
     private fun setLoop(loop: Boolean, result: MethodChannel.Result) {
-        if (!isInitialized) {
-            result.error("NOT_INITIALIZED", "Player not initialized", null)
-            return
-        }
-        
         try {
             Log.d(TAG, "Set loop: $loop")
             isLooping = loop
-            // TODO: gePlayer?.setLoop(loop)
+            // 0 表示无限循环，1 表示播放一次
+            repeatCount = if (loop) 0 else 1
             result.success(null)
         } catch (e: Exception) {
             Log.e(TAG, "Set loop error", e)
@@ -349,17 +334,13 @@ class GalaceanPlayerView(
 
     /**
      * 设置播放速度
+     * 注意：当前 SDK 可能不支持此功能
      */
     private fun setSpeed(speed: Double, result: MethodChannel.Result) {
-        if (!isInitialized) {
-            result.error("NOT_INITIALIZED", "Player not initialized", null)
-            return
-        }
-        
         try {
-            Log.d(TAG, "Set speed: $speed")
+            Log.d(TAG, "Set speed: $speed (not supported by SDK)")
             playbackSpeed = speed
-            // TODO: gePlayer?.setSpeed(speed.toFloat())
+            // SDK 可能不支持设置播放速度
             result.success(null)
         } catch (e: Exception) {
             Log.e(TAG, "Set speed error", e)
@@ -370,10 +351,11 @@ class GalaceanPlayerView(
 
     /**
      * 获取当前播放时间
+     * 注意：SDK 没有提供此方法，返回 0
      */
     private fun getCurrentTime(result: MethodChannel.Result) {
         try {
-            // TODO: val time = gePlayer?.getCurrentTime()?.toDouble() ?: 0.0
+            // SDK 没有提供获取当前时间的方法
             val time = 0.0
             result.success(time)
         } catch (e: Exception) {
@@ -384,15 +366,31 @@ class GalaceanPlayerView(
 
     /**
      * 获取总时长
+     * 可以通过 frameCount 估算
      */
     private fun getDuration(result: MethodChannel.Result) {
         try {
-            // TODO: val duration = gePlayer?.getDuration()?.toDouble() ?: 0.0
-            val duration = 0.0
+            val frameCount = gePlayer?.frameCount ?: 0
+            // 假设 30fps，计算时长（秒）
+            val duration = frameCount / 30.0
             result.success(duration)
         } catch (e: Exception) {
             Log.e(TAG, "Get duration error", e)
             result.error("GET_DURATION_ERROR", e.message, null)
+        }
+    }
+    
+    /**
+     * 销毁播放器
+     */
+    private fun destroyPlayer() {
+        try {
+            gePlayer?.destroy()
+            gePlayer = null
+            isSceneLoaded = false
+            isPlaying = false
+        } catch (e: Exception) {
+            Log.e(TAG, "Error destroying player", e)
         }
     }
     
@@ -411,13 +409,8 @@ class GalaceanPlayerView(
 
     override fun dispose() {
         Log.d(TAG, "Disposing player")
-        try {
-            // TODO: gePlayer?.destroy(); gePlayer = null
-            isInitialized = false
-        } catch (e: Exception) {
-            Log.e(TAG, "Error disposing player", e)
-        }
+        destroyPlayer()
+        container.removeAllViews()
         methodChannel.setMethodCallHandler(null)
     }
 }
-

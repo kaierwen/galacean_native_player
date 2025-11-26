@@ -119,6 +119,21 @@ class GalaceanPlayerController {
     }
   }
 
+  /// 恢复播放（从暂停状态恢复）
+  Future<void> resume() async {
+    if (!isInitialized) {
+      throw StateError('播放器未初始化');
+    }
+    
+    try {
+      await _channel!.invokeMethod('resume');
+      _updateState(GalaceanPlayerState.playing);
+    } catch (e) {
+      _errorController.add(e.toString());
+      rethrow;
+    }
+  }
+
   /// 停止
   Future<void> stop() async {
     if (!isInitialized) {
