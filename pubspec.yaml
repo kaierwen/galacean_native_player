@@ -1,6 +1,6 @@
 name: galacean_native_player
 description: "一个用于在 Flutter 中播放 Galacean Effects 的插件，支持 Android 和 iOS 平台。提供完整的播放控制、状态监听和错误处理功能。"
-version: 1.0.0
+version: 0.6.0
 homepage: https://github.com/kaierwen/galacean_native_player
 repository: https://github.com/kaierwen/galacean_native_player
 issue_tracker: https://github.com/kaierwen/galacean_native_player/issues
