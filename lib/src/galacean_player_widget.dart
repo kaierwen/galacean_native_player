@@ -10,8 +10,14 @@ import 'galacean_player_controller.dart';
 /// 
 /// 用于显示和播放 Galacean Effects
 class GalaceanPlayerWidget extends StatefulWidget {
-  /// 播放器控制器
-  final GalaceanPlayerController controller;
+  /// 播放器控制器（可选，如果不提供则内部创建）
+  final GalaceanPlayerController? controller;
+  
+  /// 要播放的资源 URL（可选，如果提供则自动加载并播放）
+  final String? url;
+  
+  /// 是否自动播放（仅在提供 url 时有效）
+  final bool autoPlay;
   
   /// 加载时的占位 Widget
   final Widget? placeholder;
@@ -21,7 +27,9 @@ class GalaceanPlayerWidget extends StatefulWidget {
 
   const GalaceanPlayerWidget({
     super.key,
-    required this.controller,
+    this.controller,
+    this.url,
+    this.autoPlay = true,
     this.placeholder,
     this.errorBuilder,
   });
@@ -31,12 +39,21 @@ class GalaceanPlayerWidget extends StatefulWidget {
 }
 
 class _GalaceanPlayerWidgetState extends State<GalaceanPlayerWidget> {
+  late final GalaceanPlayerController _controller;
   bool _isInitialized = false;
   String? _errorMessage;
+  bool _isInternalController = false;
 
   @override
   void initState() {
     super.initState();
+    // 如果没有提供 controller，创建内部 controller
+    if (widget.controller == null) {
+      _controller = GalaceanPlayerController();
+      _isInternalController = true;
+    } else {
+      _controller = widget.controller!;
+    }
     _initializePlayer();
   }
 
@@ -49,15 +66,50 @@ class _GalaceanPlayerWidgetState extends State<GalaceanPlayerWidget> {
   }
 
   void _onPlatformViewCreated(int id) {
-    widget.controller.initialize(id).then((_) {
+    _controller.initialize(id).then((_) {
       setState(() {
         _isInitialized = true;
       });
+      
+      // 如果提供了 url，自动加载并播放
+      if (widget.url != null) {
+        _loadAndPlay(widget.url!, widget.autoPlay);
+      }
     }).catchError((e) {
       setState(() {
         _errorMessage = e.toString();
       });
     });
+  }
+
+  Future<void> _loadAndPlay(String url, bool autoPlay) async {
+    try {
+      await _controller.loadScene(url, autoPlay: autoPlay);
+      if (mounted) {
+        setState(() {
+          _errorMessage = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+        });
+      }
+    }
+  }
+
+  @override
+  void didUpdateWidget(GalaceanPlayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // 如果 URL 改变了，重新加载
+    if (widget.url != null && 
+        widget.url != oldWidget.url && 
+        _isInitialized && 
+        _controller.isInitialized) {
+      _loadAndPlay(widget.url!, widget.autoPlay);
+    }
   }
 
   @override
@@ -129,6 +181,10 @@ class _GalaceanPlayerWidgetState extends State<GalaceanPlayerWidget> {
 
   @override
   void dispose() {
+    // 如果是内部创建的 controller，需要销毁它
+    if (_isInternalController) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 }
