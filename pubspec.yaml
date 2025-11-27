@@ -7,7 +7,7 @@ issue_tracker: https://github.com/kaierwen/galacean_native_player/issues
 
 environment:
   sdk: ^3.6.0
-  flutter: '>=3.3.0'
+  flutter: ">=3.3.0"
 
 dependencies:
   flutter:
