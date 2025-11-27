@@ -786,7 +786,8 @@ class _PlayerPageState extends State<PlayerPage> {
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.fullscreen_exit, color: Colors.white),
+                          icon: const Icon(Icons.fullscreen_exit,
+                              color: Colors.white),
                           onPressed: _exitFullscreen,
                           tooltip: '退出全屏',
                         ),
@@ -845,7 +846,8 @@ class _PlayerPageState extends State<PlayerPage> {
                         StreamBuilder<GalaceanPlayerState>(
                           stream: _controller.stateStream,
                           builder: (context, snapshot) {
-                            final isPlaying = snapshot.data == GalaceanPlayerState.playing;
+                            final isPlaying =
+                                snapshot.data == GalaceanPlayerState.playing;
                             return _buildFullscreenButton(
                               icon: isPlaying ? Icons.pause : Icons.play_arrow,
                               size: 48,
@@ -893,7 +895,8 @@ class _PlayerPageState extends State<PlayerPage> {
                   right: 0,
                   child: Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.black54,
                         borderRadius: BorderRadius.circular(16),
@@ -922,7 +925,8 @@ class _PlayerPageState extends State<PlayerPage> {
     double size = 36,
   }) {
     return IconButton(
-      icon: Icon(icon, color: onPressed != null ? Colors.white : Colors.white38),
+      icon:
+          Icon(icon, color: onPressed != null ? Colors.white : Colors.white38),
       iconSize: size,
       onPressed: onPressed,
     );
