@@ -18,7 +18,7 @@
 
 ```yaml
 dependencies:
-  galacean_native_player: ^1.0.0
+  galacean_native_player: ^0.6.0
 ```
 
 然后运行：
