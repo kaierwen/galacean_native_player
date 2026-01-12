@@ -2,7 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/galacean_native_player.svg)](https://pub.dev/packages/galacean_native_player)
 
-一个用于在 Flutter 中播放 [Galacean Effects](https://galacean.antgroup.com/) 的插件。
+一个用于在 Flutter 中播放 [Galacean Effects](https://galacean.antgroup.com/effects) 的插件。
 
 ## 特性
 
@@ -189,26 +189,6 @@ cd ios && pod install
 cd example
 flutter run
 ```
-
-## 待实现功能
-
-本插件目前提供了完整的框架和接口，但需要集成实际的 Galacean Effects Native SDK。
-
-### Android 端
-
-在 `GalaceanPlayerView.kt` 中需要实现：
-
-1. 集成 Galacean Effects Android SDK
-2. 创建 GLSurfaceView/TextureView 用于渲染
-3. 实现真实的播放器逻辑
-
-### iOS 端
-
-在 `GalaceanPlayerView.swift` 中需要实现：
-
-1. 通过 CocoaPods 集成 Galacean Effects iOS SDK
-2. 创建 GLKView/MetalView 用于渲染
-3. 实现真实的播放器逻辑
 
 ## 贡献
 
